@@ -18,20 +18,32 @@ import {
   IS3PutObjectResponse,
   putObjectPresignedUrl,
 } from "@/api/s3";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useAuthContext from "@/context/auth/useAuthContext";
 import { validateImageSize } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
-import { courseImageBaseUrl } from "@/lib/constants";
+import { imageBaseUrl } from "@/lib/constants";
 import { mainInformationSchema } from "./formSchema";
+import { ActionType } from "@/types/profile";
+import { getStoreByIdForUpdate } from "@/api/profile";
+import Loader from "../../Loader";
+import { useNavigate } from "react-router-dom";
 
-const MainInformation = () => {
+const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; storeId?: number }) => {
   const { formData, nextStep, updateFormData } = useMultiStepFormContext();
   const { user } = useAuthContext();
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [logoUploadKey, setLogoUploadKey] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const isUpdateAction = action === ActionType.UPDATE;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["mainInformation", { storeId }],
+    queryFn: () => getStoreByIdForUpdate(Number(storeId)),
+    enabled: !!storeId,
+  });
 
   // generate presigned URL for file upload mutation
   const { mutate: imagePresignedURLPutObjetMutate, isPending: isPendingPresignedURL } = useMutation<
@@ -126,19 +138,25 @@ const MainInformation = () => {
   const nameValue = watch("name");
   useEffect(() => {
     if (nameValue) {
-      const slug = nameValue.toLowerCase().replace(/\s+/g, "-");
+      const slug = nameValue
+        .toLowerCase()
+        .trim() // Remove leading/trailing spaces
+        .replace(/[^\w\s-]/g, "") // Remove special characters except hyphens
+        .replace(/\s+/g, "-"); // Replace spaces with hyphens
       setValue("slug", slug, { shouldValidate: true });
     }
   }, [nameValue, setValue]);
 
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    const subscription = watch((data) => {
-      updateFormData(data);
-    });
+    if (action === ActionType.CREATE) {
+      const subscription = watch((data) => {
+        updateFormData(data);
+      });
 
-    return () => subscription.unsubscribe();
-  }, [watch, updateFormData]);
+      return () => subscription.unsubscribe();
+    }
+  }, [watch, updateFormData, action]);
 
   // Handle Image Upload
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,12 +184,34 @@ const MainInformation = () => {
 
   function onSubmit(values: z.infer<typeof mainInformationSchema>) {
     console.log(values);
-    nextStep();
+    if (action === ActionType.CREATE) {
+      nextStep();
+    }
   }
 
   function onImageDelete() {
     imageDeleteToS3tMutate({ key: getValues("logo") });
   }
+
+  useEffect(() => {
+    if (isUpdateAction && data) {
+      setValue("name", data.name);
+      setValue("email", data.email);
+      setValue("tagLine", data.tagline);
+      setValue("slug", data.slug);
+      setValue("logo", data.logo);
+      setValue("number", data.number);
+      setValue("whatsappNumber", data.whatsappNumber);
+      setLogoUploadKey(data.logo);
+    }
+  }, [action, data]);
+
+  console.log("rerender");
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -278,10 +318,10 @@ const MainInformation = () => {
                   )}
                 />
                 {/* Logo Upload */}
-                {formData.logo ? (
+                {getValues().logo ? (
                   <div className="flex gap-4 items-center">
                     <img
-                      src={`${courseImageBaseUrl}${formData.logo}`}
+                      src={`${imageBaseUrl}${getValues().logo}`}
                       alt="Preview"
                       className="mt-2 w-24 h-24 rounded-md object-contain"
                     />
@@ -317,9 +357,17 @@ const MainInformation = () => {
           </div>
         </div>
         {/* Submit Button */}
-        <Button type="submit" className="px-10">
-          Next
-        </Button>
+        <div className="flex gap-4">
+          {isUpdateAction && (
+            <Button type="button" variant={"outline"} onClick={() => navigate(-1)} className="px-10">
+              Cancel
+            </Button>
+          )}
+
+          <Button type="submit" className="px-10">
+            {isUpdateAction ? "Update" : "Next"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

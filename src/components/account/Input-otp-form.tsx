@@ -13,9 +13,11 @@ import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const FormSchema = z.object({
-  pin: z.string().min(6, {
-    message: "Your one-time password must be 6 characters.",
-  }),
+  pin: z
+    .string()
+    .regex(/^\d{6}$/, "Secret must be a 6-digit number.")
+    .min(4, "Secret must be exactly 6 digits.") // Optional, but ensures length
+    .max(4, "Secret must be exactly 6 digits."),
 });
 
 interface IInputOTPForm {
@@ -71,7 +73,7 @@ function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
             <FormItem>
               <FormLabel>One-Time Password</FormLabel>
               <FormControl>
-                <InputOTP maxLength={6} {...field}>
+                <InputOTP maxLength={6} autoFocus {...field}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />

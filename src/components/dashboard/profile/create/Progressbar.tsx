@@ -5,12 +5,12 @@ const Progressbar = ({ step }: { step: number }) => {
     2: "Address Information",
     3: "Feedback & UPI id",
     4: "Category & Services",
-    5: "Social media links",
+    5: "Impotent Links",
     6: "Photos",
   };
   return (
     <div>
-      <div className="h-2 bg-gray-300 rounded-full overflow-hidden mb-8">
+      <div className="h-2 bg-gray-300 rounded-full overflow-hidden mb-6">
         <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }}></div>
       </div>
       <h2 className="text-2xl font-medium pl-4 py-2 border-l-4 border-primary rounded">{formTitle[step]}</h2>

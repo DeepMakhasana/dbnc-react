@@ -17,6 +17,26 @@ export async function putObjectPresignedUrl(payload: IS3PutObjectPayload): Promi
 
 // ----------------------------------------------------------------------------------------------------------------------
 
+export interface IS3PutMultipleObjectPayload {
+  files: {
+    fileName: string;
+    key: string;
+  }[];
+}
+export interface IS3PutMultipleObjectResponse {
+  fileName: string;
+  url: string;
+}
+
+export async function putMultipleObjectPresignedUrl(
+  payload: IS3PutMultipleObjectPayload
+): Promise<IS3PutMultipleObjectResponse[]> {
+  const { data } = await axiosInstance.post(endpoints.s3.putMultipleObjectPresignedUrl, payload);
+  return data;
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
 export interface IImageUploadPayload {
   url: string;
   payload: {

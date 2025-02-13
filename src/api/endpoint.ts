@@ -15,5 +15,22 @@ export const endpoints = {
     main: "/utils",
     state: "/utils/state",
     city: "/utils/city",
+    category: "/utils/category",
+    service: "/utils/service",
+    suggest: {
+      services: "/utils/suggestServicesByCategory",
+      profileBio: "/utils/suggestProfileBio",
+    },
+    socialMedia: "/utils/social-media",
+  },
+  store: {
+    main: "/store",
+    address: "/store/address",
+    service: "/store/service",
+    link: "/store/link",
+    photo: "/store/photo",
+    owner: "/store/owner",
+    secret: "/store/secret",
+    status: "/store/status",
   },
 };

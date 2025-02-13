@@ -19,8 +19,8 @@ export interface FormData {
   latitude: string;
   longitude: string;
   googleMapLink: string;
-  services: number[];
-  links: { SocialMediaId: number; link: string }[];
+  services: (string | undefined)[];
+  links: { socialMediaId: string; link: string; index: number }[];
   photos: string[];
 }
 
@@ -30,6 +30,7 @@ export interface FormContextType {
   nextStep: () => void;
   prevStep: () => void;
   updateFormData: (data: Partial<FormData>) => void;
+  clearFormData: () => void;
 }
 
 export const initialValueMultiStepForm = {
@@ -62,6 +63,7 @@ const defaultValue: FormContextType = {
   nextStep: () => {},
   prevStep: () => {},
   updateFormData: () => {},
+  clearFormData: () => {},
 };
 
 // auth context

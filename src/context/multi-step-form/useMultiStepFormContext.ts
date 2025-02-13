@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import MultiStepFormContext, { FormContextType } from "./MultiStepFormContext";
+import MultiStepFormContext, { FormContextType } from "./multiStepFormContext";
 
 const useMultiStepFormContext = (): FormContextType => {
   const context = useContext(MultiStepFormContext);

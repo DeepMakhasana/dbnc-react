@@ -24,3 +24,21 @@ export const storeAddressSchema = z.object({
   pincode: z.string().regex(/^\d{6}$/, "Invalid pincode"),
   googleMapLink: z.string().url("Invalid Google Maps URL").max(255, "URL must be at most 255 characters"),
 });
+
+// step 3
+export const feedbackUPIIdSchema = z.object({
+  feedbackLink: z.string().url({ message: "Invalid URL format for feedback link" }).or(z.literal("")),
+  upiId: z
+    .string()
+    .regex(/^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{3,}$/i, {
+      message: "Invalid UPI ID format",
+    })
+    .or(z.literal("")),
+});
+
+// step 4
+export const categoryServiceSchema = z.object({
+  categoryId: z.string().regex(/^\d+$/, { message: "categoryId must be a number" }),
+  services: z.array(z.string().regex(/^\d+$/, { message: "Each serviced item must be a number" })).default([]),
+  bio: z.string().max(255, { message: "Bio must be at most 255 characters" }),
+});

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import useMultiStepFormContext from "@/context/multi-step-form/useMultiStepFormContext";
 import { storeAddressSchema } from "./formSchema";
@@ -37,7 +37,7 @@ const AddressInformation = () => {
       longitude: formData.longitude,
     },
   });
-  const { watch, handleSubmit, getValues, setValue, formState, error } = form;
+  const { watch, handleSubmit, getValues, setValue } = form;
 
   const { data: cities, isLoading: isCitiesLoading } = useQuery({
     queryKey: ["city", getValues("stateId")],
@@ -93,7 +93,7 @@ const AddressInformation = () => {
           <div className="grid lg:col-span-2 lg:gap-8">
             <Card className="py-6 shadow-md rounded-lg">
               <CardContent className="py-0 px-4 lg:px-6 grid gap-3">
-                {/* Name */}
+                {/* address */}
                 <FormField
                   control={form.control}
                   name="addressLine"

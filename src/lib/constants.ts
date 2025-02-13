@@ -1,13 +1,14 @@
 export const constants = {
   TOKEN: "auth_token",
   FORMDATA: "profile_form_data",
+  FORMSTEP: "profile_form_step",
 };
 
 export const allowPath = ["/account", "/account/onboard"];
 
 export const afterLoginAllowedPath = ["/checkout"];
 
-export const courseImageBaseUrl = "https://dbnc.s3.ap-south-1.amazonaws.com/";
+export const imageBaseUrl = "https://dbnc.s3.ap-south-1.amazonaws.com/";
 
 // export const clientEndpoints = {
 //   auth: {

@@ -17,14 +17,14 @@ const DashboardSMSideBar = () => {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-2 text-lg font-medium">
             <SheetClose asChild>
-              <Link to="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
+              <Link to="/profile" className="flex items-center gap-2 text-lg font-semibold">
                 <Package2 className="h-6 w-6" />
                 <span className="sr-only">Logo.</span>
               </Link>
             </SheetClose>
             <SheetClose asChild>
               <NavLink
-                to="/dashboard"
+                to="/profile"
                 className={(isActive) =>
                   `mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground mt-4 ${
                     isActive ? "bg-muted text-foreground" : "text-muted-foreground"
