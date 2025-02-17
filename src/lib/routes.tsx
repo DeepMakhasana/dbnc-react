@@ -14,15 +14,25 @@ import StatusUpdateLayout from "@/components/status-update/layout";
 import StoreOpen from "@/page/StoreOpen";
 import StoreClose from "@/page/StoreClose";
 import ProfileUpdate from "@/page/dashboard/ProfileUpdate";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import NotFoundPage from "@/page/NotFound";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: (
+      <ErrorBoundary>
+        <Home />
+      </ErrorBoundary>
+    ),
   },
   {
     path: "/status-update",
-    element: <StatusUpdateLayout />,
+    element: (
+      <ErrorBoundary>
+        <StatusUpdateLayout />
+      </ErrorBoundary>
+    ),
     children: [
       {
         path: ":storeId",
@@ -36,11 +46,19 @@ export const router = createBrowserRouter([
         path: "close/:slug",
         element: <StoreClose />,
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
   },
   {
     path: "/account",
-    element: <AccountLayout />,
+    element: (
+      <ErrorBoundary>
+        <AccountLayout />
+      </ErrorBoundary>
+    ),
     children: [
       {
         path: "",
@@ -50,11 +68,19 @@ export const router = createBrowserRouter([
         path: "onboard",
         element: <Onboard />,
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
   },
   {
     path: "/profile",
-    element: <DashboardLayout />,
+    element: (
+      <ErrorBoundary>
+        <DashboardLayout />
+      </ErrorBoundary>
+    ),
     children: [
       {
         path: "",
@@ -83,6 +109,10 @@ export const router = createBrowserRouter([
       {
         path: "secret/:storeId",
         element: <StoreSecret />,
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },

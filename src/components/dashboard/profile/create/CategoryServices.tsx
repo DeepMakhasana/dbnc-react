@@ -14,14 +14,65 @@ import { Check, ChevronsUpDown, Loader2, Plus, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addService, getCategory, getServices, getSuggestProfileBio, getSuggestServicesByCategory } from "@/api/utils";
-import { AddServicePayload, AddServiceResponse, SuggestBioPayload, SuggestBioResponse } from "@/types/utils";
+import {
+  addCategory,
+  addService,
+  getCategory,
+  getServices,
+  getSuggestProfileBio,
+  getSuggestServicesByCategory,
+} from "@/api/utils";
+import {
+  AddCategoryPayload,
+  AddCategoryResponse,
+  AddServicePayload,
+  AddServiceResponse,
+  SuggestBioPayload,
+  SuggestBioResponse,
+} from "@/types/utils";
+import {
+  ActionType,
+  DeleteStoreServicesPayload,
+  DeleteStoreServicesResponse,
+  StoreCategoryBioUpdatePayload,
+  StoreServicePayload,
+  StoreServiceResponse,
+  StoreUpdateResponse,
+} from "@/types/profile";
+import { useNavigate } from "react-router-dom";
+import {
+  createStoreService,
+  deleteStoreServices,
+  getStoreCategoryBioById,
+  getStoreServicesById,
+  updateStoreCategoryBio,
+} from "@/api/profile";
+import Loader from "../../Loader";
+import { toast } from "@/hooks/use-toast";
 
-const CategoryServices = () => {
+const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; storeId?: number }) => {
   const { formData, nextStep, updateFormData, prevStep } = useMultiStepFormContext();
   const [searchService, setSearchService] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
   const [selectedService, setSelectedService] = useState<string[]>([]);
+  const [displaySelectedService, setDisplaySelectedService] = useState<{ id: number; name: string }[]>([]);
+  const [deletedService, setDeletedService] = useState<number[]>([]);
+  const [addServices, setAddServices] = useState<number[]>([]);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const isUpdateAction = action === ActionType.UPDATE;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["categoryBio", { storeId }],
+    queryFn: () => getStoreCategoryBioById(Number(storeId)),
+    enabled: !!storeId,
+  });
+
+  const { data: createdServices, isLoading: createdServicesIsLoading } = useQuery({
+    queryKey: ["createdServices", { storeId }],
+    queryFn: () => getStoreServicesById(Number(storeId)),
+    enabled: !!storeId,
+  });
 
   const form = useForm<z.infer<typeof categoryServiceSchema>>({
     resolver: zodResolver(categoryServiceSchema),
@@ -31,7 +82,7 @@ const CategoryServices = () => {
       bio: formData.bio,
     },
   });
-  const { watch, handleSubmit, getValues } = form;
+  const { watch, handleSubmit, getValues, reset } = form;
 
   // get all category
   const { data: category, isLoading: isCategoryLoading } = useQuery({
@@ -39,29 +90,50 @@ const CategoryServices = () => {
     queryFn: getCategory,
   });
 
+  const onChangeCategory = watch("categoryId");
   // get services by category
   const { data: services, isLoading: isServicesLoading } = useQuery({
     queryKey: ["services", getValues("categoryId")],
     queryFn: () => getServices(getValues("categoryId")),
-    enabled: !!getValues("categoryId"),
+    enabled: !!onChangeCategory,
   });
 
   useEffect(() => {
-    if (services && services?.length > 0) {
-      const selectServices = services.filter((s) => formData.services.includes(String(s.id))).map((s) => s.name);
-      setSelectedService(selectServices);
+    if (services && services?.length > 0 && !isUpdateAction) {
+      const oldSelectServicesArray = services.filter((s) => getValues("services").includes(String(s.id)));
+      const onlySelectedServiceNameArray = oldSelectServicesArray.map((s) => s.name);
+      setSelectedService(onlySelectedServiceNameArray);
+      setDisplaySelectedService(oldSelectServicesArray);
     }
-  }, [services, formData.services]);
+  }, [services, getValues, isUpdateAction]);
 
   // get suggest services by category
   const { data: suggestServices, isLoading: isSuggestServicesLoading } = useQuery({
     queryKey: ["suggestServices", getValues("categoryId")],
     queryFn: () =>
       getSuggestServicesByCategory({
-        name: formData.name,
+        name: isUpdateAction ? data?.name || "" : formData.name,
         categoryId: getValues("categoryId"),
       }),
     enabled: !!getValues("categoryId") && !!services,
+  });
+
+  // add category mutation
+  const { mutate: addCategoryMutation, isPending: isAddCategoryPending } = useMutation<
+    AddCategoryResponse,
+    Error,
+    AddCategoryPayload
+  >({
+    mutationFn: addCategory,
+    onSuccess: (data) => {
+      console.log("service add", data);
+      form.setValue("categoryId", String(data.id));
+      queryClient.setQueryData(["category"], (oldData: any) => [...oldData, data]);
+      setSearchCategory("");
+    },
+    onError: (error: any) => {
+      console.log("error", error);
+    },
   });
 
   // add service mutation
@@ -74,8 +146,13 @@ const CategoryServices = () => {
     onSuccess: (data) => {
       console.log("service add", data);
       setSelectedService((pre: string[]) => [...pre, data.name]);
+      setDisplaySelectedService((pre) => [...pre, data]);
       form.setValue("services", [...getValues("services"), String(data.id)]);
+      if (isUpdateAction) {
+        setAddServices((pre) => [...pre, data.id]);
+      }
       queryClient.setQueryData(["services", getValues("categoryId")], (oldData: any) => [...oldData, data]);
+      setSearchService("");
     },
     onError: (error: any) => {
       console.log("error", error);
@@ -98,19 +175,124 @@ const CategoryServices = () => {
     },
   });
 
+  // update category and bio mutation
+  const { mutate: updateCategoryBioMutation, isPending: isUpdateCategoryBioPending } = useMutation<
+    StoreUpdateResponse,
+    Error,
+    { payload: StoreCategoryBioUpdatePayload; storeId: string | number }
+  >({
+    mutationFn: updateStoreCategoryBio,
+    onSuccess: (data) => {
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("error", error);
+    },
+  });
+
+  // update category and bio mutation
+  const { mutate: deleteStoreServicesMutation, isPending: isDeleteStoreServicesPending } = useMutation<
+    DeleteStoreServicesResponse,
+    Error,
+    DeleteStoreServicesPayload
+  >({
+    mutationFn: deleteStoreServices,
+    onSuccess: (data) => {
+      console.log("deleted", data.message);
+      queryClient.setQueryData(["createdServices", { storeId }], (oldData: StoreServiceResponse[]) =>
+        oldData.filter((s) => !deletedService.includes(s.id))
+      );
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("error", error);
+    },
+  });
+
+  // mutation for create store services
+  const { mutate: createStoreServiceMutation, isPending: createStoreServicePending } = useMutation<
+    StoreServiceResponse[],
+    Error,
+    StoreServicePayload[]
+  >({
+    mutationFn: createStoreService,
+    onSuccess: (data) => {
+      console.log("successfully create store service", data);
+      queryClient.setQueryData(["createdServices", { storeId }], (oldData: StoreServiceResponse[]) => [
+        ...oldData,
+        ...data,
+      ]);
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("error", error);
+      toast({
+        title: "Create store service error:",
+        description: error?.response.data.message || error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof categoryServiceSchema>) {
-    console.log(values);
-    nextStep();
+    if (isUpdateAction) {
+      console.log(values);
+      updateCategoryBioMutation({
+        payload: { categoryId: Number(values.categoryId), bio: values.bio },
+        storeId: Number(storeId),
+      });
+      if (deletedService.length > 0) {
+        deleteStoreServicesMutation(deletedService);
+      }
+      if (addServices?.length > 0) {
+        const prevLen = createdServices?.length || 1 - deletedService.length;
+        createStoreServiceMutation(
+          addServices.map((service, i) => ({
+            index: i + prevLen,
+            serviceId: Number(service),
+            storeId: Number(storeId),
+          }))
+        );
+      }
+    } else {
+      nextStep();
+    }
   }
 
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    const subscription = watch((data) => {
-      updateFormData(data);
-    });
+    if (!isUpdateAction) {
+      const subscription = watch((data) => {
+        updateFormData(data);
+      });
 
-    return () => subscription.unsubscribe();
-  }, [watch, updateFormData]);
+      return () => subscription.unsubscribe();
+    }
+  }, [watch, updateFormData, isUpdateAction]);
+
+  useEffect(() => {
+    if (isUpdateAction && data && createdServices) {
+      reset({
+        categoryId: String(data.category.id),
+        services: createdServices.map((s) => String(s.serviceId)),
+        bio: data.bio,
+      });
+      setSelectedService(createdServices.map((s) => s.service.name));
+      setDisplaySelectedService(createdServices.map((s) => ({ id: s.serviceId, name: s.service.name })));
+    }
+  }, [action, data, isUpdateAction, reset, createdServices]);
+
+  if (isLoading || createdServicesIsLoading) {
+    return <Loader />;
+  }
+
+  console.log("display", selectedService);
 
   return (
     <Form {...form}>
@@ -123,7 +305,14 @@ const CategoryServices = () => {
               name="categoryId"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-2">
-                  <FormLabel>Business category</FormLabel>
+                  <FormLabel className="flex gap-4">
+                    Business category
+                    {isAddCategoryPending && (
+                      <div className="flex items-center gap-2 text-zinc-700">
+                        <Loader2 className="animate-spin w-4 h-4" /> Adding...
+                      </div>
+                    )}
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -145,7 +334,24 @@ const CategoryServices = () => {
                     </PopoverTrigger>
                     <PopoverContent className="sm:w-[400px] w-[220px] p-0">
                       <Command>
-                        <CommandInput placeholder="Search category..." />
+                        <CommandInput
+                          onValueChange={(e) => setSearchCategory(e)}
+                          value={searchCategory}
+                          placeholder="Search category..."
+                        />
+                        {searchCategory && (
+                          <CommandItem
+                            value={searchCategory}
+                            className="cursor-pointer text-zinc-700"
+                            onSelect={() => {
+                              addCategoryMutation({
+                                name: searchCategory,
+                              });
+                            }}
+                          >
+                            {searchCategory} <Plus className="ml-auto mr-1 cursor-pointer" />
+                          </CommandItem>
+                        )}
                         <CommandList>
                           <CommandEmpty>No category found.</CommandEmpty>
                           <CommandGroup>
@@ -206,6 +412,62 @@ const CategoryServices = () => {
                             field.value.length > 0 ? "justify-start" : "justify-between text-muted-foreground"
                           }`}
                         >
+                          {field.value.length > 0 && displaySelectedService.length > 0
+                            ? displaySelectedService.map((s) => (
+                                <div
+                                  key={s.id}
+                                  className="flex items-center justify-start gap-3 border rounded py-2 px-4"
+                                >
+                                  <span className="line-clamp-1 max-w-36 sm:max-w-fit">{s.name}</span>
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const updateSelectedValues = field.value.filter((id) => id !== String(s.id));
+                                      form.setValue("services", updateSelectedValues);
+                                      setDisplaySelectedService((prev) => prev.filter((ds) => ds.id != s.id));
+                                      if (isUpdateAction) {
+                                        const isExist = createdServices?.find((cs) => cs.serviceId === s.id);
+                                        if (isExist) setDeletedService((pre) => [...pre, isExist.id]);
+                                      }
+                                    }}
+                                  >
+                                    <X />
+                                  </div>
+                                </div>
+                              ))
+                            : "Select Services"}
+                          {/* {field.value.length > 0 &&
+                            isUpdateAction &&
+                            data?.category.id != Number(getValues("categoryId")) &&
+                            services &&
+                            createdServices &&
+                            [...services, ...createdServices.map((s) => ({ id: s.serviceId, name: s.service.name }))]
+                              ?.filter((service) => field.value.includes(String(service.id)))
+                              ?.map((selectedService) => (
+                                <div
+                                  key={selectedService.id}
+                                  className="flex items-center justify-start gap-3 border rounded py-2 px-4"
+                                >
+                                  <span className="line-clamp-1 max-w-36 sm:max-w-fit">{selectedService.name}</span>
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const updateSelectedValues = field.value.filter(
+                                        (id) => id !== String(selectedService.id)
+                                      );
+                                      form.setValue("services", updateSelectedValues);
+                                      if (isUpdateAction) {
+                                        const isExist = createdServices?.find(
+                                          (s) => s.serviceId === selectedService.id
+                                        );
+                                        if (isExist) setDeletedService((pre) => [...pre, isExist.id]);
+                                      }
+                                    }}
+                                  >
+                                    <X />
+                                  </div>
+                                </div>
+                              ))}
                           {field.value.length > 0
                             ? services
                                 ?.filter((service) => field.value.includes(String(service.id)))
@@ -222,22 +484,41 @@ const CategoryServices = () => {
                                           (id) => id !== String(selectedService.id)
                                         );
                                         form.setValue("services", updateSelectedValues);
+                                        if (isUpdateAction) {
+                                          const isExist = createdServices?.find(
+                                            (s) => s.serviceId === selectedService.id
+                                          );
+                                          if (isExist) setDeletedService((pre) => [...pre, isExist.id]);
+                                        }
                                       }}
                                     >
                                       <X />
                                     </div>
                                   </div>
                                 ))
-                            : "Select Services"}
+                            : "Select Services"} */}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="sm:w-[400px] w-full p-0">
                       <Command className="h-60">
-                        <CommandInput onValueChange={(e) => setSearchService(e)} placeholder="Search services..." />
+                        <CommandInput
+                          onValueChange={(e) => setSearchService(e)}
+                          value={searchService}
+                          placeholder="Search services..."
+                        />
                         {searchService && (
-                          <CommandItem value={searchService} className="cursor-pointer text-zinc-700">
+                          <CommandItem
+                            value={searchService}
+                            className="cursor-pointer text-zinc-700"
+                            onSelect={() => {
+                              addServiceMutation({
+                                name: searchService,
+                                categoryId: Number(getValues("categoryId")),
+                              });
+                            }}
+                          >
                             {searchService} <Plus className="ml-auto mr-1 cursor-pointer" />
                           </CommandItem>
                         )}
@@ -249,13 +530,19 @@ const CategoryServices = () => {
                                 <Loader2 className="animate-spin" /> Loading...
                               </div>
                             )}
-                            {services?.map((service) => (
+                            {displaySelectedService.map((service) => (
                               <CommandItem
                                 value={service.name}
                                 key={service.id}
                                 onSelect={() => {
-                                  setSelectedService((pre: string[]) => [...pre, service.name]);
-                                  form.setValue("services", [...field.value, String(service.id)]);
+                                  if (!field.value.includes(String(service.id))) {
+                                    setSelectedService((pre: string[]) => [...pre, service.name]);
+                                    setDisplaySelectedService((pre) => [...pre, service]);
+                                    form.setValue("services", [...field.value, String(service.id)]);
+                                    if (isUpdateAction) {
+                                      setAddServices((pre) => [...pre, service.id]);
+                                    }
+                                  }
                                 }}
                               >
                                 {service.name}
@@ -267,6 +554,32 @@ const CategoryServices = () => {
                                 />
                               </CommandItem>
                             ))}
+                            {services
+                              ?.filter((s) => !displaySelectedService.some((i) => i.id === s.id))
+                              .map((service) => (
+                                <CommandItem
+                                  value={service.name}
+                                  key={service.id}
+                                  onSelect={() => {
+                                    if (!field.value.includes(String(service.id))) {
+                                      setSelectedService((pre: string[]) => [...pre, service.name]);
+                                      setDisplaySelectedService((pre) => [...pre, service]);
+                                      form.setValue("services", [...field.value, String(service.id)]);
+                                      if (isUpdateAction) {
+                                        setAddServices((pre) => [...pre, service.id]);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {service.name}
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      field.value.includes(String(service.id)) ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
                             {isSuggestServicesLoading && (
                               <div className="flex items-center gap-2">
                                 <Loader2 className="animate-spin" /> Loading...
@@ -341,12 +654,18 @@ const CategoryServices = () => {
         </Card>
         {/* Submit Button */}
         <div className="flex gap-4">
-          <Button type="button" onClick={() => prevStep()} className="px-10">
-            Previous
+          <Button type="button" onClick={() => (isUpdateAction ? navigate(-1) : prevStep())} className="px-10">
+            {isUpdateAction ? "Cancel" : "Previous"}
           </Button>
-          <Button type="submit" className="px-10">
-            Next
-          </Button>
+          {createStoreServicePending || isDeleteStoreServicesPending || isUpdateCategoryBioPending ? (
+            <Button type="button" disabled className="px-10">
+              <Loader2 className="animate-spin" /> Updating...
+            </Button>
+          ) : (
+            <Button type="submit" className="px-10">
+              {isUpdateAction ? "Update" : "Next"}
+            </Button>
+          )}
         </div>
       </form>
     </Form>

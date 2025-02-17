@@ -9,9 +9,25 @@ import useMultiStepFormContext from "@/context/multi-step-form/useMultiStepFormC
 import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { ActionType, StoreFeedbackUpiUpdatePayload, StoreUpdateResponse } from "@/types/profile";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getStoreFeedbackUpiById, updateStoreFeedbackUpi } from "@/api/profile";
+import Loader from "../../Loader";
+import { toast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
-const FeedbackUPIId = () => {
+const FeedbackUPIId = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; storeId?: number }) => {
   const { formData, nextStep, updateFormData, prevStep } = useMultiStepFormContext();
+  const navigate = useNavigate();
+  const isUpdateAction = action === ActionType.UPDATE;
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["feedbackUpi", { storeId }],
+    queryFn: () => getStoreFeedbackUpiById(Number(storeId)),
+    enabled: !!storeId,
+  });
 
   const form = useForm<z.infer<typeof feedbackUPIIdSchema>>({
     resolver: zodResolver(feedbackUPIIdSchema),
@@ -22,19 +38,63 @@ const FeedbackUPIId = () => {
   });
   const { watch, handleSubmit } = form;
 
+  // update mutation
+  const { mutate: updateMutate, isPending: updatePending } = useMutation<
+    StoreUpdateResponse,
+    Error,
+    { payload: StoreFeedbackUpiUpdatePayload; storeId: string | number }
+  >({
+    mutationFn: updateStoreFeedbackUpi,
+    onSuccess: (res) => {
+      queryClient.setQueryData(["feedbackUpi", { storeId }], () => ({
+        feedbackLink: res.feedbackLink,
+        upiId: res.upiId,
+      }));
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("request fail: ", error);
+      toast({
+        title: "Update warning:",
+        description: error?.response.data.message || error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof feedbackUPIIdSchema>) {
-    console.log(values);
-    nextStep();
+    if (isUpdateAction) {
+      updateMutate({ payload: values, storeId: Number(storeId) });
+    } else {
+      nextStep();
+    }
   }
+
+  useEffect(() => {
+    if (isUpdateAction && data?.feedbackLink && data.upiId) {
+      form.reset({
+        feedbackLink: data.feedbackLink,
+        upiId: data.upiId,
+      });
+    }
+  }, [data, isUpdateAction, form]);
 
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    const subscription = watch((data) => {
-      updateFormData(data);
-    });
+    if (!isUpdateAction) {
+      const subscription = watch((data) => {
+        updateFormData(data);
+      });
 
-    return () => subscription.unsubscribe();
-  }, [watch, updateFormData]);
+      return () => subscription.unsubscribe();
+    }
+  }, [watch, updateFormData, isUpdateAction]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <Form {...form}>
@@ -81,11 +141,14 @@ const FeedbackUPIId = () => {
         </Card>
         {/* Submit Button */}
         <div className="flex gap-4">
-          <Button type="button" onClick={() => prevStep()} className="px-10">
-            Previous
+          <Button type="button" onClick={() => (isUpdateAction ? navigate(-1) : prevStep())} className="px-10">
+            {isUpdateAction ? "Cancel" : "Previous"}
           </Button>
           <Button type="submit" className="px-10">
-            Next
+            {updatePending && <Loader2 className="animate-spin" />}
+            {isUpdateAction && !updatePending && "Update"}
+            {!isUpdateAction && "Next"}
+            {updatePending && "Updating..."}
           </Button>
         </div>
       </form>

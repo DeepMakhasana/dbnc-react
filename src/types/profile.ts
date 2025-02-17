@@ -38,6 +38,9 @@ export interface StoreServicePayload {
 }
 export interface StoreServiceResponse extends StoreServicePayload {
   id: number;
+  service: {
+    name: string;
+  };
 }
 
 export interface StoreLinksPayload {
@@ -107,4 +110,84 @@ export interface StoreByIdForUpdateResponse {
   tagline: string;
   logo: string;
   whatsappNumber: string;
+}
+
+export interface StoreAddressByIdResponse {
+  id: number;
+  storeId: number;
+  addressLine: string;
+  stateId: number;
+  cityId: number;
+  latitude: number;
+  longitude: number;
+  pincode: number;
+  googleMapLink: string;
+}
+
+export interface StoreMainDetailUpdatePayload {
+  number: string;
+  name: string;
+  email: string;
+  tagline: string;
+  logo: string;
+  whatsappNumber: string;
+}
+export interface StoreCategoryBioUpdatePayload {
+  categoryId: number;
+  bio: string;
+}
+export interface StoreCategoryBioByIdResponse {
+  category: {
+    id: number;
+    name?: string;
+  };
+  bio: string;
+  name: string;
+}
+export interface StoreFeedbackUpiUpdatePayload {
+  feedbackLink: string | null;
+  upiId: string | null;
+}
+export interface StoreUpdateResponse
+  extends StoreMainDetailUpdatePayload,
+    StoreCategoryBioUpdatePayload,
+    StoreFeedbackUpiUpdatePayload {
+  id: number;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type DeleteStoreServicesPayload = number[];
+export type DeleteStoreServicesResponse = { message: string };
+
+export interface StoreLinks {
+  link: string;
+  id: number;
+  storeId: number;
+  SocialMediaId: number;
+  index: number;
+  socialMedia: {
+    name: string;
+    id: number;
+    icon: string;
+  };
+}
+
+export type UpdateStoreSocialLinkPayload = {
+  link: string;
+};
+export type UpdateStoreSocialLinkResponse = {
+  storeId: number;
+  link: string;
+  id: number;
+  SocialMediaId: number;
+  index: number;
+};
+
+export interface StorePhotos {
+  id: number;
+  storeId: number;
+  index: number;
+  path: string;
 }

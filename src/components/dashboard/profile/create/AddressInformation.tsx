@@ -11,14 +11,21 @@ import useMultiStepFormContext from "@/context/multi-step-form/useMultiStepFormC
 import { storeAddressSchema } from "./formSchema";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { getCities, getStates } from "@/api/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { ActionType, StoreAddressPayload, StoreAddressResponse } from "@/types/profile";
+import { getStoreAddressById, updateStoreAddressInformation } from "@/api/profile";
+import { useNavigate } from "react-router-dom";
+import Loader from "../../Loader";
 
-const AddressInformation = () => {
+const AddressInformation = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; storeId?: number }) => {
   const { formData, nextStep, updateFormData, prevStep } = useMultiStepFormContext();
+  const navigate = useNavigate();
+  const isUpdateAction = action === ActionType.UPDATE;
+  const queryClient = useQueryClient();
 
   const { data: states, isLoading: isStateLoading } = useQuery({
     queryKey: ["state"],
@@ -39,16 +46,39 @@ const AddressInformation = () => {
   });
   const { watch, handleSubmit, getValues, setValue } = form;
 
+  const stateId = watch("stateId");
   const { data: cities, isLoading: isCitiesLoading } = useQuery({
     queryKey: ["city", getValues("stateId")],
     queryFn: () => getCities(getValues("stateId")),
-    enabled: !!getValues("stateId"),
+    enabled: !!stateId,
   });
 
-  function onSubmit(values: z.infer<typeof storeAddressSchema>) {
-    console.log(values);
-    nextStep();
-  }
+  const { data, isLoading } = useQuery({
+    queryKey: ["addressInformation", { storeId }],
+    queryFn: () => getStoreAddressById(Number(storeId)),
+    enabled: !!storeId,
+  });
+
+  useEffect(() => {
+    if (isUpdateAction && data) {
+      form.reset({
+        addressLine: data.addressLine,
+        cityId: String(data.cityId),
+        stateId: String(data.stateId),
+        latitude: String(data.latitude),
+        longitude: String(data.longitude),
+        pincode: String(data.pincode),
+        googleMapLink: data.googleMapLink,
+      });
+    }
+  }, [data, isUpdateAction, form]);
+
+  // Effect to set the cityId only after cities are fetched
+  useEffect(() => {
+    if (isUpdateAction && cities && cities?.length > 0 && data?.cityId) {
+      setValue("cityId", String(data.cityId));
+    }
+  }, [isUpdateAction, cities, data?.cityId, setValue]);
 
   function setLatitudeLongitude() {
     console.log("test");
@@ -60,6 +90,9 @@ const AddressInformation = () => {
           console.log(position.coords);
           setValue("latitude", `${position.coords.latitude}`);
           setValue("longitude", `${position.coords.longitude}`);
+          toast({
+            title: "Location set successfully",
+          });
         },
         (error) => {
           console.error("Geolocation Error:", error.message);
@@ -75,16 +108,65 @@ const AddressInformation = () => {
     }
   }
 
+  // update mutation
+  const { mutate: updateMutate, isPending: updatePending } = useMutation<
+    StoreAddressResponse,
+    Error,
+    { payload: StoreAddressPayload; storeAddressId: string | number }
+  >({
+    mutationFn: updateStoreAddressInformation,
+    onSuccess: (res) => {
+      queryClient.setQueryData(["addressInformation", { storeId }], () => res);
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("request fail: ", error);
+      toast({
+        title: "Update warning:",
+        description: error?.response.data.message || error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof storeAddressSchema>) {
+    const { addressLine, cityId, googleMapLink, latitude, longitude, pincode, stateId } = values;
+    if (isUpdateAction && data) {
+      updateMutate({
+        payload: {
+          addressLine,
+          cityId: Number(cityId),
+          googleMapLink,
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          pincode: Number(pincode),
+          stateId: Number(stateId),
+          storeId: Number(storeId),
+        },
+        storeAddressId: data?.id,
+      });
+    } else {
+      nextStep();
+    }
+  }
+
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    const subscription = watch((data) => {
-      updateFormData(data);
-    });
+    if (!isUpdateAction) {
+      const subscription = watch((data) => {
+        updateFormData(data);
+      });
 
-    return () => subscription.unsubscribe();
-  }, [watch, updateFormData]);
+      return () => subscription.unsubscribe();
+    }
+  }, [watch, updateFormData, isUpdateAction]);
 
-  // console.log(formState, error);
+  console.log("rerender", data);
+  if (isLoading || isStateLoading || isCitiesLoading) {
+    return <Loader />;
+  }
 
   return (
     <Form {...form}>
@@ -117,7 +199,7 @@ const AddressInformation = () => {
                     <FormItem>
                       <FormLabel>State</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange} defaultValue={getValues("stateId")}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a state" />
                           </SelectTrigger>
@@ -125,7 +207,11 @@ const AddressInformation = () => {
                             {isStateLoading ? (
                               <SelectItem value="loading">Loading...</SelectItem>
                             ) : (
-                              states?.map((state) => <SelectItem value={`${state.id}`}>{state.name}</SelectItem>)
+                              states?.map((state) => (
+                                <SelectItem key={state.id} value={`${state.id}`}>
+                                  {state.name}
+                                </SelectItem>
+                              ))
                             )}
                           </SelectContent>
                         </Select>
@@ -143,7 +229,7 @@ const AddressInformation = () => {
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange} defaultValue={getValues("cityId")}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a city" />
                           </SelectTrigger>
@@ -151,7 +237,11 @@ const AddressInformation = () => {
                             {isCitiesLoading ? (
                               <SelectItem value="loading">Loading...</SelectItem>
                             ) : (
-                              cities?.map((city) => <SelectItem value={`${city.id}`}>{city.name}</SelectItem>)
+                              cities?.map((city) => (
+                                <SelectItem key={city.id} value={`${city.id}`}>
+                                  {city.name}
+                                </SelectItem>
+                              ))
                             )}
                           </SelectContent>
                         </Select>
@@ -176,22 +266,6 @@ const AddressInformation = () => {
                     </FormItem>
                   )}
                 />
-
-                {/* WhatsApp Number */}
-                {/* <FormField
-                  control={form.control}
-                  name="whatsappNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>WhatsApp Number</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="whatsApp number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                      <FormDescription>WhatsApp number must be 10 digit</FormDescription>
-                    </FormItem>
-                  )}
-                /> */}
               </CardContent>
             </Card>
           </div>
@@ -234,11 +308,14 @@ const AddressInformation = () => {
         </div>
         {/* Submit Button */}
         <div className="flex gap-4">
-          <Button type="button" onClick={() => prevStep()} className="px-10">
-            Previous
+          <Button type="button" onClick={() => (isUpdateAction ? navigate(-1) : prevStep())} className="px-10">
+            {isUpdateAction ? "Cancel" : "Previous"}
           </Button>
           <Button type="submit" className="px-10">
-            Next
+            {updatePending && <Loader2 className="animate-spin" />}
+            {isUpdateAction && !updatePending && "Update"}
+            {!isUpdateAction && "Next"}
+            {updatePending && "Updating..."}
           </Button>
         </div>
       </form>

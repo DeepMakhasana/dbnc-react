@@ -2,7 +2,7 @@ import { createContext } from "react";
 
 export interface FormData {
   name: string;
-  tagLine: string;
+  tagline: string;
   logo: string;
   slug: string;
   number: string;
@@ -35,7 +35,7 @@ export interface FormContextType {
 
 export const initialValueMultiStepForm = {
   name: "",
-  tagLine: "",
+  tagline: "",
   logo: "",
   slug: "",
   number: "",

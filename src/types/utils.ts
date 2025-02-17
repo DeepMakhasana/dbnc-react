@@ -30,6 +30,14 @@ export interface SuggestBioResponse {
   bio: string;
 }
 
+export interface AddCategoryPayload {
+  name: string;
+}
+export interface AddCategoryResponse {
+  id: number;
+  name: string;
+}
+
 export interface AddServicePayload {
   name: string;
   categoryId: number;

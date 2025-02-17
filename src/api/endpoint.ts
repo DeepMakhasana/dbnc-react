@@ -25,6 +25,9 @@ export const endpoints = {
   },
   store: {
     main: "/store",
+    mainDetail: "/store/main-detail",
+    categoryBio: "/store/category-bio",
+    feedbackUpi: "/store/feedback-upi",
     address: "/store/address",
     service: "/store/service",
     link: "/store/link",

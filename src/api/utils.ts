@@ -1,6 +1,8 @@
 import axiosInstance from "@/lib/axiosInstance";
 import { endpoints } from "./endpoint";
 import {
+  AddCategoryPayload,
+  AddCategoryResponse,
   AddServicePayload,
   AddServiceResponse,
   category,
@@ -49,6 +51,12 @@ export async function getSuggestServicesByCategory(payload: SuggestServicesPaylo
 // suggest profile bio
 export async function getSuggestProfileBio(payload: SuggestBioPayload): Promise<SuggestBioResponse> {
   const { data } = await axiosInstance.post(endpoints.utils.suggest.profileBio, payload);
+  return data;
+}
+
+// add services
+export async function addCategory(payload: AddCategoryPayload): Promise<AddCategoryResponse> {
+  const { data } = await axiosInstance.post(endpoints.utils.category, payload);
   return data;
 }
 

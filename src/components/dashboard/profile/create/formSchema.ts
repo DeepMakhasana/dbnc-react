@@ -6,7 +6,7 @@ export const mainInformationSchema = z.object({
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(40, "Name must be less then and equal to 40 characters"),
-  tagLine: z.string().min(3, "Tagline is required").max(70, "Tagline must be less then and equal to 70 characters"),
+  tagline: z.string().min(3, "Tagline is required").max(70, "Tagline must be less then and equal to 70 characters"),
   logo: z.string().min(2, "Logo not uploaded"),
   slug: z.string(),
   number: z.string().min(10, "Enter a valid phone number").max(10, "Enter a valid phone number"),

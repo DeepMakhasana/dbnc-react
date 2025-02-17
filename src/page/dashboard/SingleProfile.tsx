@@ -6,6 +6,34 @@ const SingleProfile = () => {
   const params = useParams();
   const navigate = useNavigate();
   console.log(params);
+
+  const forms = [
+    {
+      title: "Main Information",
+      slug: "main-information",
+    },
+    {
+      title: "Address Information",
+      slug: "address-information",
+    },
+    {
+      title: "Feedback & UPI id",
+      slug: "feedback-upi",
+    },
+    {
+      title: "Category & Services",
+      slug: "category-service",
+    },
+    {
+      title: "Impotent Links",
+      slug: "impotent-links",
+    },
+    {
+      title: "Photos",
+      slug: "photos",
+    },
+  ];
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="flex justify-between items-center">
@@ -27,54 +55,17 @@ const SingleProfile = () => {
       </div>
       {/* container */}
       <div className="grid gap-3">
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Main Information</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Address Information</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Feedback & UPI id</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Category & Services</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Impotent Links</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
-        <div className="flex justify-between items-center border rounded p-4">
-          <p>Photos</p>
-          <Link to={`/profile/secret/${params.storeId}`}>
-            <Button size={"icon"}>
-              <Edit />
-            </Button>
-          </Link>
-        </div>
+        {forms.map((form) => (
+          <div key={form.slug} className="flex justify-between items-center border rounded p-4">
+            <p>{form.title}</p>
+            <Link to={`/profile/update?id=${params.storeId}&slug=${form.slug}`}>
+              <Button size={"icon"}>
+                <Edit />
+              </Button>
+            </Link>
+          </div>
+        ))}
+
         <div className="flex justify-between items-center border rounded p-4">
           <p>Secret Pin</p>
           <Link to={`/profile/secret/${params.storeId}`}>

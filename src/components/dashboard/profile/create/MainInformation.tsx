@@ -18,15 +18,20 @@ import {
   IS3PutObjectResponse,
   putObjectPresignedUrl,
 } from "@/api/s3";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useAuthContext from "@/context/auth/useAuthContext";
 import { validateImageSize } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
 import { imageBaseUrl } from "@/lib/constants";
 import { mainInformationSchema } from "./formSchema";
-import { ActionType } from "@/types/profile";
-import { getStoreByIdForUpdate } from "@/api/profile";
+import {
+  ActionType,
+  StoreByIdForUpdateResponse,
+  StoreMainDetailUpdatePayload,
+  StoreUpdateResponse,
+} from "@/types/profile";
+import { getStoreByIdForUpdate, updateStoreMainInformation } from "@/api/profile";
 import Loader from "../../Loader";
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +43,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
   const [logoUploadKey, setLogoUploadKey] = useState<string | null>(null);
   const navigate = useNavigate();
   const isUpdateAction = action === ActionType.UPDATE;
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["mainInformation", { storeId }],
@@ -120,12 +126,44 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
     },
   });
 
+  // update mutation
+  const { mutate: updateMutate, isPending: updatePending } = useMutation<
+    StoreUpdateResponse,
+    Error,
+    { payload: StoreMainDetailUpdatePayload; storeId: string | number }
+  >({
+    mutationFn: updateStoreMainInformation,
+    onSuccess: (res) => {
+      queryClient.setQueryData(["mainInformation", { storeId }], (old: StoreByIdForUpdateResponse) => ({
+        name: res.name,
+        number: res.number,
+        id: old.id,
+        email: res.email,
+        slug: res.slug,
+        tagline: res.tagline,
+        logo: res.logo,
+        whatsappNumber: res.whatsappNumber,
+      }));
+      toast({
+        title: "Updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("request fail: ", error);
+      toast({
+        title: "Update warning:",
+        description: error?.response.data.message || error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const form = useForm<z.infer<typeof mainInformationSchema>>({
     resolver: zodResolver(mainInformationSchema),
     defaultValues: {
       name: formData.name,
       slug: formData.slug,
-      tagLine: formData.tagLine,
+      tagline: formData.tagline,
       number: formData.number,
       whatsappNumber: formData.whatsappNumber,
       email: formData.email,
@@ -149,14 +187,14 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
 
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    if (action === ActionType.CREATE) {
+    if (!isUpdateAction) {
       const subscription = watch((data) => {
         updateFormData(data);
       });
 
       return () => subscription.unsubscribe();
     }
-  }, [watch, updateFormData, action]);
+  }, [watch, updateFormData, isUpdateAction]);
 
   // Handle Image Upload
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,7 +213,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
       } else {
         // generate presigned-url
         const type = `${selectedFile?.type}`.split("/");
-        const updateFileName = `${user?.id}/logo.${type[1]}`;
+        const updateFileName = `${user?.id}/logo-${Date.now()}.${type[1]}`;
         setLogoUploadKey(updateFileName);
         imagePresignedURLPutObjetMutate({ fileName: updateFileName, fileType: selectedFile.type });
       }
@@ -183,9 +221,11 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
   };
 
   function onSubmit(values: z.infer<typeof mainInformationSchema>) {
-    console.log(values);
-    if (action === ActionType.CREATE) {
+    const { name, email, logo, number, tagline, whatsappNumber } = values;
+    if (!isUpdateAction) {
       nextStep();
+    } else {
+      updateMutate({ payload: { name, email, logo, number, tagline, whatsappNumber }, storeId: Number(storeId) });
     }
   }
 
@@ -197,16 +237,14 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
     if (isUpdateAction && data) {
       setValue("name", data.name);
       setValue("email", data.email);
-      setValue("tagLine", data.tagline);
+      setValue("tagline", data.tagline);
       setValue("slug", data.slug);
       setValue("logo", data.logo);
       setValue("number", data.number);
       setValue("whatsappNumber", data.whatsappNumber);
       setLogoUploadKey(data.logo);
     }
-  }, [action, data]);
-
-  console.log("rerender");
+  }, [action, data, isUpdateAction, setValue]);
 
   if (isLoading) {
     return <Loader />;
@@ -236,23 +274,25 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
                 />
 
                 {/* Slug (Read-Only) */}
-                <FormField
-                  control={form.control}
-                  name="slug"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Slug</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="slug" {...field} readOnly />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                {!isUpdateAction && (
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder="slug" {...field} readOnly />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* Tagline */}
                 <FormField
                   control={form.control}
-                  name="tagLine"
+                  name="tagline"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tagline</FormLabel>
@@ -363,10 +403,15 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
               Cancel
             </Button>
           )}
-
-          <Button type="submit" className="px-10">
-            {isUpdateAction ? "Update" : "Next"}
-          </Button>
+          {updatePending ? (
+            <Button type="button" disabled className="px-10">
+              <Loader2 className="animate-spin" /> Updating...
+            </Button>
+          ) : (
+            <Button type="submit" className="px-10">
+              {isUpdateAction ? "Update" : "Next"}
+            </Button>
+          )}
         </div>
       </form>
     </Form>

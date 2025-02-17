@@ -1,13 +1,13 @@
 import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Trash, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import useMultiStepFormContext from "@/context/multi-step-form/useMultiStepFormContext";
 import { generateUniqueId } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IS3PutMultipleObjectPayload, IS3PutMultipleObjectResponse, putMultipleObjectPresignedUrl } from "@/api/s3";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
@@ -19,13 +19,17 @@ import {
   createStoreLinks,
   createStorePhotos,
   createStoreService,
+  deleteStorePhoto,
+  getStorePhotosById,
 } from "@/api/profile";
 import {
+  ActionType,
   StoreAddressPayload,
   StoreAddressResponse,
   StoreLinksPayload,
   StoreLinksResponse,
   StorePayload,
+  StorePhotos,
   StorePhotosPayload,
   StorePhotosResponse,
   StoreResponse,
@@ -33,8 +37,9 @@ import {
   StoreServiceResponse,
 } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
+import Loader from "../../Loader";
 
-const Photos = () => {
+const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; storeId?: number }) => {
   const { user } = useAuthContext();
   const { formData, updateFormData, prevStep, clearFormData } = useMultiStepFormContext();
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
@@ -42,6 +47,14 @@ const Photos = () => {
   const [uploadProgress, setUploadProgress] = useState<{ uploaded: number; total: number }>({ uploaded: 0, total: 0 });
   const [uploadImages, setUploadImages] = useState<string[]>([]);
   const navigate = useNavigate();
+  const isUpdateAction = action === ActionType.UPDATE;
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["photos", { storeId }],
+    queryFn: () => getStorePhotosById(Number(storeId)),
+    enabled: !!storeId,
+  });
 
   const uploadFilesToS3 = async (payload: IS3PutMultipleObjectResponse[]) => {
     let uploadedCount = 0;
@@ -81,8 +94,13 @@ const Photos = () => {
       uploadFilesToS3(data)
         .then((data) => {
           console.log(data);
-          updateFormData({ photos: [...formData.photos, ...uploadImages] });
+          if (!isUpdateAction) {
+            updateFormData({ photos: [...formData.photos, ...uploadImages] });
+          }
           clearAllImages();
+          if (isUpdateAction && storeId) {
+            createStorePhotosMutation({ storeId, paths: uploadImages });
+          }
         })
         .catch((error) => {
           toast({
@@ -157,7 +175,7 @@ const Photos = () => {
     email,
     number,
     whatsappNumber,
-    tagLine,
+    tagline,
     slug,
     logo,
     feedbackLink,
@@ -286,12 +304,21 @@ const Photos = () => {
     mutationFn: createStorePhotos,
     onSuccess: (data) => {
       console.log("successfully create store photos", data);
-      clearFormData();
-      toast({
-        title: "Profile:",
-        description: "Profile created successfully",
-      });
-      navigate("/profile");
+      if (isUpdateAction) {
+        setUploadImages([]);
+        setUploadProgress({ uploaded: 0, total: 0 });
+        queryClient.setQueryData(["photos", { storeId }], (oldData: StorePhotos[]) => [...oldData, ...data]);
+        toast({
+          title: "New photos uploaded successfully",
+        });
+      } else {
+        clearFormData();
+        toast({
+          title: "Profile:",
+          description: "Profile created successfully",
+        });
+        navigate("/profile");
+      }
     },
     onError: (error: any) => {
       console.log("error", error);
@@ -303,6 +330,35 @@ const Photos = () => {
     },
   });
 
+  // mutation for create store photos
+  const { mutate: deleteStorePhotoMutation, isPending: deleteStorePhotoPending } = useMutation<
+    StorePhotos,
+    Error,
+    number
+  >({
+    mutationFn: deleteStorePhoto,
+    onSuccess: (data) => {
+      queryClient.setQueryData(["photos", { storeId }], (oldData: StorePhotos[]) =>
+        oldData.filter((photo) => photo.id !== data.id)
+      );
+      toast({
+        title: "Photo deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.log("error", error);
+      toast({
+        title: "Delete photo error:",
+        description: error?.response.data.message || error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUploadedPhoto = (id: number) => {
+    deleteStorePhotoMutation(id);
+  };
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     console.log(images);
@@ -312,7 +368,7 @@ const Photos = () => {
       email,
       number,
       whatsappNumber,
-      tagline: tagLine,
+      tagline: tagline,
       slug,
       logo,
       feedbackLink,
@@ -321,6 +377,10 @@ const Photos = () => {
       upiId,
       bio,
     });
+  }
+
+  if (isLoading) {
+    return <Loader />;
   }
 
   return (
@@ -339,8 +399,14 @@ const Photos = () => {
             placeholder="tets"
           />
 
+          {deleteStorePhotoPending && (
+            <p className="py-4 flex gap-2">
+              <Loader2 className="animate-spin" /> Deleting...
+            </p>
+          )}
+
           {/* uploaded images */}
-          {formData.photos.length > 0 && (
+          {formData.photos.length > 0 && !isUpdateAction && (
             <div className={`grid grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-4 my-4`}>
               {formData.photos.map((image) => (
                 <div key={image} className="flex justify-center">
@@ -349,6 +415,29 @@ const Photos = () => {
                     alt="uploaded"
                     className="w-24 h-24 object-cover rounded shadow border"
                   />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data && data.length > 0 && isUpdateAction && (
+            <div className={`grid grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 my-4`}>
+              {data.map((image) => (
+                <div key={image.id} className="relative flex justify-center">
+                  <img
+                    src={`${imageBaseUrl}${image.path}`}
+                    alt="uploaded"
+                    className="w-24 h-24 object-cover rounded shadow border"
+                  />
+                  <Button
+                    type="button"
+                    variant={"outline"}
+                    size={"icon"}
+                    onClick={() => deleteUploadedPhoto(image.id)}
+                    className="absolute top-0 right-0 rounded-full"
+                  >
+                    <Trash />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -401,29 +490,31 @@ const Photos = () => {
         </CardContent>
       </Card>
       {/* Submit Button */}
-      <div className="flex gap-4">
-        <Button type="button" onClick={() => prevStep()} className="px-10">
-          Previous
-        </Button>
-        <Button
-          type="submit"
-          disabled={
-            createStorePhotosPending ||
-            createStoreLinksPending ||
-            createStoreServicePending ||
-            createStoreAddressPending ||
-            createStorePending
-          }
-          className="px-10"
-        >
-          {(createStorePhotosPending ||
-            createStoreLinksPending ||
-            createStoreServicePending ||
-            createStoreAddressPending ||
-            createStorePending) && <Loader2 className="animate-spin" />}
-          Create
-        </Button>
-      </div>
+      {!isUpdateAction && (
+        <div className="flex gap-4">
+          <Button type="button" onClick={() => prevStep()} className="px-10">
+            Previous
+          </Button>
+          <Button
+            type="submit"
+            disabled={
+              createStorePhotosPending ||
+              createStoreLinksPending ||
+              createStoreServicePending ||
+              createStoreAddressPending ||
+              createStorePending
+            }
+            className="px-10"
+          >
+            {(createStorePhotosPending ||
+              createStoreLinksPending ||
+              createStoreServicePending ||
+              createStoreAddressPending ||
+              createStorePending) && <Loader2 className="animate-spin" />}
+            Create
+          </Button>
+        </div>
+      )}
     </form>
   );
 };
