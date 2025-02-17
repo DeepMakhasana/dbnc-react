@@ -1,11 +1,11 @@
 import useAuthContext from "@/context/auth/useAuthContext";
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       navigate("/profile");
     } else {

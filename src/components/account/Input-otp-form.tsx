@@ -11,6 +11,7 @@ import { IIsEmailVerify, verifyEmailPayload, verifyEmailResponse } from "@/types
 import { verifyEmailOtp } from "@/api/auth";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import useAuthContext from "@/context/auth/useAuthContext";
 
 const FormSchema = z.object({
   pin: z
@@ -26,6 +27,7 @@ interface IInputOTPForm {
 
 function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
   const navigate = useNavigate();
+  const { login } = useAuthContext();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -37,12 +39,14 @@ function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
   const mutation = useMutation<verifyEmailResponse, Error, verifyEmailPayload>({
     mutationFn: verifyEmailOtp,
     onSuccess: (data) => {
+      console.log(data);
       toast({
         title: "OTP verification:",
         description: data.message,
       });
-      if (data.isUserExist) {
-        navigate("/");
+      if (data.isUserExist && data.token) {
+        login(data.token);
+        navigate("/profile");
       } else {
         navigate(`/account/onboard?email=${encodeURIComponent(data.email)}`);
       }

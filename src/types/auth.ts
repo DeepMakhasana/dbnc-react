@@ -17,6 +17,7 @@ export interface verifyEmailResponse {
   email: string;
   message: string;
   isUserExist: null | { email: string; id: number; createdAt: Date };
+  token?: string;
 }
 
 export type IIsEmailVerify = {
