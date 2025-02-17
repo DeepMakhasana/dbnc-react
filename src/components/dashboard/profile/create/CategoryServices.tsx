@@ -182,7 +182,7 @@ const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: Ac
     { payload: StoreCategoryBioUpdatePayload; storeId: string | number }
   >({
     mutationFn: updateStoreCategoryBio,
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
         title: "Updated successfully",
       });
@@ -654,7 +654,12 @@ const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: Ac
         </Card>
         {/* Submit Button */}
         <div className="flex gap-4">
-          <Button type="button" onClick={() => (isUpdateAction ? navigate(-1) : prevStep())} className="px-10">
+          <Button
+            type="button"
+            variant={"outline"}
+            onClick={() => (isUpdateAction ? navigate(-1) : prevStep())}
+            className="px-10"
+          >
             {isUpdateAction ? "Cancel" : "Previous"}
           </Button>
           {createStoreServicePending || isDeleteStoreServicesPending || isUpdateCategoryBioPending ? (

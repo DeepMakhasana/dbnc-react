@@ -38,7 +38,6 @@ const ImpotentLink = ({ action = ActionType.CREATE, storeId }: { action?: Action
   const [addValue, setAddValue] = useState<TLink[]>([]);
   const navigate = useNavigate();
   const isUpdateAction = action === ActionType.UPDATE;
-  const queryClient = useQueryClient();
 
   // get all social media platform
   const { data: SocialMediaPlatform, isLoading: isSocialMediaPlatformLoading } = useQuery({

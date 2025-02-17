@@ -252,7 +252,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
           <div className="grid lg:col-span-2 lg:gap-8">
             <Card className="py-6 shadow-md rounded-lg">
@@ -274,7 +274,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
                 />
 
                 {/* Slug (Read-Only) */}
-                {!isUpdateAction && (
+                {/* {!isUpdateAction && (
                   <FormField
                     control={form.control}
                     name="slug"
@@ -282,12 +282,12 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
                       <FormItem>
                         <FormLabel>Slug</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="slug" {...field} readOnly />
+                          <Input type="text" placeholder="slug" disabled {...field} readOnly />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-                )}
+                )} */}
 
                 {/* Tagline */}
                 <FormField

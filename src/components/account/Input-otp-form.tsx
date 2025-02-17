@@ -5,7 +5,7 @@ import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useMutation } from "@tanstack/react-query";
 import { IIsEmailVerify, verifyEmailPayload, verifyEmailResponse } from "@/types/auth";
 import { verifyEmailOtp } from "@/api/auth";
@@ -15,9 +15,9 @@ import { useNavigate } from "react-router-dom";
 const FormSchema = z.object({
   pin: z
     .string()
-    .regex(/^\d{6}$/, "Secret must be a 6-digit number.")
-    .min(4, "Secret must be exactly 6 digits.") // Optional, but ensures length
-    .max(4, "Secret must be exactly 6 digits."),
+    .regex(/^\d{6}$/, "one time password must be a 6-digit number.")
+    .min(6, "one time password must be exactly 6 digits.") // Optional, but ensures length
+    .max(6, "one time password must be exactly 6 digits."),
 });
 
 interface IInputOTPForm {
@@ -37,7 +37,6 @@ function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
   const mutation = useMutation<verifyEmailResponse, Error, verifyEmailPayload>({
     mutationFn: verifyEmailOtp,
     onSuccess: (data) => {
-      console.log("successfully verification done", data);
       toast({
         title: "OTP verification:",
         description: data.message,
@@ -59,7 +58,6 @@ function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data);
     mutation.mutate({ email: isEmailVerified.email, otp: data.pin, userType: "owner" });
   }
 
@@ -78,9 +76,6 @@ function InputOTPForm({ isEmailVerified }: IInputOTPForm) {
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
                     <InputOTPSlot index={2} />
-                  </InputOTPGroup>
-                  <InputOTPSeparator />
-                  <InputOTPGroup>
                     <InputOTPSlot index={3} />
                     <InputOTPSlot index={4} />
                     <InputOTPSlot index={5} />

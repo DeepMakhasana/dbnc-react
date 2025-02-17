@@ -12,7 +12,7 @@ const Home = () => {
       navigate("/account");
     }
   }, [isAuthenticated, navigate]);
-  return <div>Home</div>;
+  return <div></div>;
 };
 
 export default Home;

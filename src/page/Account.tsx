@@ -33,7 +33,6 @@ const Account = () => {
   const { mutate, isPending } = useMutation<sendVerificationOtpEmailResponse, Error, sendVerificationOtpEmailPayload>({
     mutationFn: sendVerificationOtpEmail,
     onSuccess: (data) => {
-      console.log("successfully verification done", data);
       setIsEmailVerified({ email: data.email, isVerified: false });
       toast({
         title: "OTP verification:",

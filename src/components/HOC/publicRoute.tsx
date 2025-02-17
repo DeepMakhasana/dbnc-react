@@ -5,16 +5,14 @@ import { useLayoutEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const publicRoute = <P extends object>(WrappedComponent: React.ComponentType<P>): React.FC<P> => {
-  const ProtectedComponent = (props: P) => {
+  const PublicComponent = (props: P) => {
     const navigate = useNavigate();
     const path = useLocation();
     const { isAuthenticated, isLoading } = useAuthContext(); // Replace with your auth logic
-    console.log("protect route: ", isAuthenticated);
 
     useLayoutEffect(() => {
       if (isAuthenticated && !isLoading) {
         if (allowPath.includes(path.pathname)) {
-          console.log("enter--", path);
           if (path?.state?.previous) {
             navigate(path?.state?.previous);
           } else {
@@ -39,7 +37,10 @@ const publicRoute = <P extends object>(WrappedComponent: React.ComponentType<P>)
     return <WrappedComponent {...props} />;
   };
 
-  return ProtectedComponent;
+  // Add a display name for React Fast Refresh
+  PublicComponent.displayName = `PublicRoute(${WrappedComponent.displayName || WrappedComponent.name || "Component"})`;
+
+  return PublicComponent;
 };
 
 export default publicRoute;

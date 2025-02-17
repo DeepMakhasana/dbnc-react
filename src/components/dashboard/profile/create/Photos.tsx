@@ -492,7 +492,7 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
       {/* Submit Button */}
       {!isUpdateAction && (
         <div className="flex gap-4">
-          <Button type="button" onClick={() => prevStep()} className="px-10">
+          <Button type="button" variant={"outline"} onClick={() => prevStep()} className="px-10">
             Previous
           </Button>
           <Button

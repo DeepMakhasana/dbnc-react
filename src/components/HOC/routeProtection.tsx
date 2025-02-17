@@ -1,9 +1,9 @@
 import useAuthContext from "@/context/auth/useAuthContext";
 import { Loader2 } from "lucide-react";
-import { useLayoutEffect } from "react";
+import { ComponentType, FC, useLayoutEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const routeProtection = <P extends object>(WrappedComponent: React.ComponentType<P>): React.FC<P> => {
+const routeProtection = <P extends object>(WrappedComponent: ComponentType<P>): FC<P> => {
   const ProtectedComponent = (props: P) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -31,6 +31,11 @@ const routeProtection = <P extends object>(WrappedComponent: React.ComponentType
 
     return <WrappedComponent {...props} />;
   };
+
+  // Add a display name for React Fast Refresh
+  ProtectedComponent.displayName = `RouteProtected(${
+    WrappedComponent.displayName || WrappedComponent.name || "Component"
+  })`;
 
   return ProtectedComponent;
 };

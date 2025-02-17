@@ -4,6 +4,7 @@ import DashboardLGSideBar from "./sidebar/DashboardLGSideBar";
 import DashboardSMSideBar from "./sidebar/DashboardSMSideBar";
 import ProfileMenu from "./sidebar/ProfileMenu";
 import useAuthContext from "@/context/auth/useAuthContext";
+import routeProtection from "../HOC/routeProtection";
 
 const DashboardLayout = () => {
   const { logout, user } = useAuthContext();
@@ -37,4 +38,4 @@ const DashboardLayout = () => {
   );
 };
 
-export default DashboardLayout;
+export default routeProtection(DashboardLayout);

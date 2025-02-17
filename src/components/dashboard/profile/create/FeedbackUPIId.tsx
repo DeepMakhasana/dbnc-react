@@ -141,7 +141,12 @@ const FeedbackUPIId = ({ action = ActionType.CREATE, storeId }: { action?: Actio
         </Card>
         {/* Submit Button */}
         <div className="flex gap-4">
-          <Button type="button" onClick={() => (isUpdateAction ? navigate(-1) : prevStep())} className="px-10">
+          <Button
+            type="button"
+            variant={"outline"}
+            onClick={() => (isUpdateAction ? navigate(-1) : prevStep())}
+            className="px-10"
+          >
             {isUpdateAction ? "Cancel" : "Previous"}
           </Button>
           <Button type="submit" className="px-10">
