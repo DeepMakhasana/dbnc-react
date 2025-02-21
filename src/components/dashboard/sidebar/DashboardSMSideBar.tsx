@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Menu, Package2 } from "lucide-react";
+import { Home, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const DashboardSMSideBar = () => {
@@ -18,8 +18,8 @@ const DashboardSMSideBar = () => {
           <nav className="grid gap-2 text-lg font-medium">
             <SheetClose asChild>
               <Link to="/profile" className="flex items-center gap-2 text-lg font-semibold">
-                <Package2 className="h-6 w-6" />
-                <span className="sr-only">Logo.</span>
+                <img src="/liveyst.svg" alt="liveyst" className="h-8 w-8" />
+                <span>liveyst</span>
               </Link>
             </SheetClose>
             <SheetClose asChild>

@@ -96,6 +96,7 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
           console.log(data);
           if (!isUpdateAction) {
             updateFormData({ photos: [...formData.photos, ...uploadImages] });
+            setUploadProgress({ uploaded: 0, total: 0 });
           }
           clearAllImages();
           if (isUpdateAction && storeId) {

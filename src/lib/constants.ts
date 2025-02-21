@@ -23,4 +23,4 @@ export const imageBaseUrl = "https://dbnc.s3.ap-south-1.amazonaws.com/";
 // };
 
 // export const MAIN_COURSES_PAGE = "vcp-client.vercel.app";
-export const MAIN_COURSES_PAGE = "https://paramcadcenter.com/learn";
+export const MAIN_SITE = "https://liveyst.com";

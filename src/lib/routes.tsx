@@ -39,11 +39,11 @@ export const router = createBrowserRouter([
         element: <StoreStatusChange />,
       },
       {
-        path: "open/:slug",
+        path: "open",
         element: <StoreOpen />,
       },
       {
-        path: "close/:slug",
+        path: "close",
         element: <StoreClose />,
       },
       {

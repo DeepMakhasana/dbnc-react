@@ -41,7 +41,7 @@ const StoreStatusChange = () => {
     mutationFn: updateStoreOpenCloseStatus,
     onSuccess: (data) => {
       reset();
-      navigate(`/status-update/${data.isOpen ? "open" : "close"}/${data.slug}`, { replace: true });
+      navigate(`/status-update/${data.isOpen ? "open" : "close"}?name=${encodeURI(data.name)}`, { replace: true });
     },
     onError: (error: any) => {
       console.log("error", error);
@@ -61,12 +61,6 @@ const StoreStatusChange = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2">
-        <a href="#" className="flex flex-col items-center gap-2 font-medium">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md">
-            <img src="/bliveprofile.svg" alt="bliveprofile" />
-          </div>
-          <span className="sr-only">Bliveprofile</span>
-        </a>
         <h1 className="text-2xl font-bold">Update store status</h1>
         <div className="text-center text-sm">Enter secret for update status</div>
       </div>

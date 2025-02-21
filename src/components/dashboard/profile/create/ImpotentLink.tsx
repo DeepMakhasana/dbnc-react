@@ -101,9 +101,12 @@ const ImpotentLink = ({ action = ActionType.CREATE, storeId }: { action?: Action
     },
   });
 
-  const updateFormsData = useCallback((data: { links: { socialMediaId: string; link: string; index: number }[] }) => {
-    updateFormData(data);
-  }, []);
+  const updateFormsData = useCallback(
+    (data: { links: { socialMediaId: string; link: string; index: number }[] }) => {
+      updateFormData(data);
+    },
+    [updateFormData]
+  );
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -123,14 +126,22 @@ const ImpotentLink = ({ action = ActionType.CREATE, storeId }: { action?: Action
 
   // Watch form changes and sync with MultiStepForm state
   useEffect(() => {
-    if (!isUpdateAction) {
-      if (value.length > 0) {
-        updateFormsData({
-          links: value.map((l) => ({ socialMediaId: l.socialMediaId, link: l.link, index: l.index })),
-        });
+    if (!isUpdateAction && value.length > 0) {
+      const newLinks = value.map((l) => ({
+        socialMediaId: l.socialMediaId,
+        link: l.link,
+        index: l.index,
+      }));
+
+      // Check if the new links are the same as the current form data
+      const currentLinks = formData?.links || [];
+      const isSame = JSON.stringify(newLinks) === JSON.stringify(currentLinks);
+
+      if (!isSame) {
+        updateFormsData({ links: newLinks });
       }
     }
-  }, [value, updateFormsData, isUpdateAction]);
+  }, [value, updateFormsData, isUpdateAction, formData?.links]);
 
   if (isStoreLinksLoading) {
     return <Loader />;
@@ -172,23 +183,24 @@ const ImpotentLink = ({ action = ActionType.CREATE, storeId }: { action?: Action
                         <CommandItem
                           key={social.id}
                           value={social.name}
-                          onSelect={(currentValue) => {
-                            console.log(currentValue);
-                            setValue((pre) => [
-                              ...pre,
-                              { name: social.name, socialMediaId: String(social.id), link: "", index: -1 },
-                            ]);
-                            setOpen(false);
-                            if (isUpdateAction && StoreLinks) {
-                              setAddValue((pre) => [
+                          onSelect={() => {
+                            if (!value.map((p) => p.name).includes(social.name)) {
+                              setValue((pre) => [
                                 ...pre,
-                                {
-                                  name: social.name,
-                                  socialMediaId: String(social.id),
-                                  link: "",
-                                  index: StoreLinks.length + 1,
-                                },
+                                { name: social.name, socialMediaId: String(social.id), link: "", index: -1 },
                               ]);
+                              setOpen(false);
+                              if (isUpdateAction && StoreLinks) {
+                                setAddValue((pre) => [
+                                  ...pre,
+                                  {
+                                    name: social.name,
+                                    socialMediaId: String(social.id),
+                                    link: "",
+                                    index: StoreLinks.length + 1,
+                                  },
+                                ]);
+                              }
                             }
                           }}
                         >

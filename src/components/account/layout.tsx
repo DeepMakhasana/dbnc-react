@@ -10,11 +10,11 @@ const AccountLayout = () => {
             <div className="flex flex-col items-center gap-2">
               <a href="#" className="flex flex-col items-center gap-2 font-medium">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                  <img src="/bliveprofile.svg" alt="bliveprofile" />
+                  <img src="/liveyst.svg" alt="liveyst" />
                 </div>
-                <span className="sr-only">Bliveprofile</span>
+                <span className="sr-only">liveyst</span>
               </a>
-              <h1 className="text-2xl font-bold">Welcome to Bliveprofile</h1>
+              <h1 className="text-2xl font-bold">Welcome to liveyst</h1>
               <div className="text-center text-sm">Get started with your email</div>
             </div>
             <Outlet />
