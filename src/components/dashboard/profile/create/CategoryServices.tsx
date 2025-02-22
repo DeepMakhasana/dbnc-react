@@ -635,9 +635,9 @@ const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: Ac
                     variant={"outline"}
                     onClick={() =>
                       suggestBioMutation({
-                        name: formData.name,
-                        cityId: formData.cityId,
-                        categoryId: formData.categoryId,
+                        name: isUpdateAction ? String(data?.name) : formData.name,
+                        cityId: isUpdateAction ? String(data?.storeAddresses.cityId) : formData.cityId,
+                        categoryId: isUpdateAction ? getValues("categoryId") : formData.categoryId,
                         services: selectedService,
                       })
                     }

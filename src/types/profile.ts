@@ -143,6 +143,9 @@ export interface StoreCategoryBioByIdResponse {
   };
   bio: string;
   name: string;
+  storeAddresses: {
+    cityId: number;
+  };
 }
 export interface StoreFeedbackUpiUpdatePayload {
   feedbackLink: string | null;

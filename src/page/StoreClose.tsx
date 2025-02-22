@@ -20,9 +20,9 @@ const StoreClose = () => {
       transition={{ duration: 0.6 }}
       className="flex flex-col gap-6 items-center"
     >
-      <h2 className="text-xl font-semibold">{decodeURI(name as string)}</h2>
-      <img src="/door-closed.svg" alt="close" className="max-w-52 max-h-96" />
+      <h2 className="text-xl font-bold">{decodeURI(name as string)}</h2>
       <p className="text-lg font-semibold tracking-wider bg-primary rounded text-background px-4 py-1">CLOSE</p>
+      <img src="/door-closed.svg" alt="close" />
     </motion.div>
   );
 };

@@ -20,9 +20,9 @@ const StoreOpen = () => {
       transition={{ duration: 1 }}
       className="flex flex-col gap-6 items-center"
     >
-      <h2 className="text-2xl font-semibold">{decodeURI(name as string)}</h2>
-      <img src="/door-open.svg" alt="close" />
+      <h2 className="text-2xl font-bold">{decodeURI(name as string)}</h2>
       <p className="text-lg font-semibold tracking-wider bg-primary rounded text-background px-4 py-1">OPEN</p>
+      <img src="/door-open.svg" alt="close" />
     </motion.div>
   );
 };
