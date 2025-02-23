@@ -12,7 +12,8 @@ export interface FormData {
   bio: string;
   feedbackLink: string;
   upiId: string;
-  addressLine: string;
+  addressLine1: string;
+  addressLine2: string;
   stateId: string;
   cityId: string;
   pincode: string;
@@ -45,7 +46,8 @@ export const initialValueMultiStepForm = {
   bio: "",
   feedbackLink: "",
   upiId: "",
-  addressLine: "",
+  addressLine1: "",
+  addressLine2: "",
   stateId: "",
   cityId: "",
   pincode: "",

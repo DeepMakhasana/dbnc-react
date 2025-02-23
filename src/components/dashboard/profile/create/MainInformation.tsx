@@ -21,7 +21,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useAuthContext from "@/context/auth/useAuthContext";
-import { validateImageSize } from "@/lib/utils";
+import { createSlug, validateImageSize } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
 import { imageBaseUrl } from "@/lib/constants";
 import { mainInformationSchema } from "./formSchema";
@@ -176,11 +176,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
   const nameValue = watch("name");
   useEffect(() => {
     if (nameValue) {
-      const slug = nameValue
-        .toLowerCase()
-        .trim() // Remove leading/trailing spaces
-        .replace(/[^\w\s-]/g, "") // Remove special characters except hyphens
-        .replace(/\s+/g, "-"); // Replace spaces with hyphens
+      const slug = createSlug(nameValue);
       setValue("slug", slug, { shouldValidate: true });
     }
   }, [nameValue, setValue]);

@@ -39,3 +39,11 @@ export function formateDateTime(isoDate: Date | string, onlyDate: boolean = fals
 
   return formatter.format(date);
 }
+
+export function createSlug(str: string) {
+  return str
+    .toLowerCase()
+    .trim() // Remove leading/trailing spaces
+    .replace(/[^\w\s-]/g, "") // Remove special characters except hyphens
+    .replace(/\s+/g, "-"); // Replace spaces with hyphens
+}

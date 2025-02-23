@@ -19,7 +19,8 @@ export interface StoreResponse extends StorePayload {
 
 export interface StoreAddressPayload {
   storeId: number;
-  addressLine: string;
+  addressLine1: string;
+  addressLine2: string;
   stateId: number;
   cityId: number;
   latitude: number;
@@ -115,7 +116,8 @@ export interface StoreByIdForUpdateResponse {
 export interface StoreAddressByIdResponse {
   id: number;
   storeId: number;
-  addressLine: string;
+  addressLine1: string;
+  addressLine2: string;
   stateId: number;
   cityId: number;
   latitude: number;

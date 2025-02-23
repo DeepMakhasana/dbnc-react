@@ -16,7 +16,14 @@ export const mainInformationSchema = z.object({
 
 // step 2
 export const storeAddressSchema = z.object({
-  addressLine: z.string().min(1, "Address is required").max(255, "Address must be at most 255 characters"),
+  addressLine1: z
+    .string()
+    .min(1, "Shop number, building, near by/opposite is required")
+    .max(255, "Shop number, building, near by/opposite must be at most 255 characters"),
+  addressLine2: z
+    .string()
+    .min(1, "Main area, road is required")
+    .max(255, "Main area, road must be at most 255 characters"),
   stateId: z.string().regex(/^\d+$/, "State ID must be a number"),
   cityId: z.string().regex(/^\d+$/, "City ID must be a number"),
   latitude: z.string().regex(/^(-?\d+(\.\d+)?)$/, "Invalid latitude"),

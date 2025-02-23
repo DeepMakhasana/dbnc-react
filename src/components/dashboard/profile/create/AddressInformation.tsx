@@ -35,7 +35,8 @@ const AddressInformation = ({ action = ActionType.CREATE, storeId }: { action?: 
   const form = useForm<z.infer<typeof storeAddressSchema>>({
     resolver: zodResolver(storeAddressSchema),
     defaultValues: {
-      addressLine: formData.addressLine,
+      addressLine1: formData.addressLine1,
+      addressLine2: formData.addressLine2,
       stateId: formData.stateId,
       cityId: formData.cityId,
       pincode: formData.pincode,
@@ -62,7 +63,8 @@ const AddressInformation = ({ action = ActionType.CREATE, storeId }: { action?: 
   useEffect(() => {
     if (isUpdateAction && data) {
       form.reset({
-        addressLine: data.addressLine,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
         cityId: String(data.cityId),
         stateId: String(data.stateId),
         latitude: String(data.latitude),
@@ -132,11 +134,12 @@ const AddressInformation = ({ action = ActionType.CREATE, storeId }: { action?: 
   });
 
   function onSubmit(values: z.infer<typeof storeAddressSchema>) {
-    const { addressLine, cityId, googleMapLink, latitude, longitude, pincode, stateId } = values;
+    const { addressLine1, addressLine2, cityId, googleMapLink, latitude, longitude, pincode, stateId } = values;
     if (isUpdateAction && data) {
       updateMutate({
         payload: {
-          addressLine,
+          addressLine1,
+          addressLine2,
           cityId: Number(cityId),
           googleMapLink,
           latitude: Number(latitude),
@@ -178,12 +181,28 @@ const AddressInformation = ({ action = ActionType.CREATE, storeId }: { action?: 
                 {/* address */}
                 <FormField
                   control={form.control}
-                  name="addressLine"
+                  name="addressLine1"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Shop number, building, near by/opposite</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Full address" rows={3} {...field} />
+                        <Textarea placeholder="Shop number, building, near by/opposite (only)" rows={3} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>Maximum 255 characters are allow in address</FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* address */}
+                <FormField
+                  control={form.control}
+                  name="addressLine2"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Main area, road</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Main area, road (only)" rows={3} {...field} />
                       </FormControl>
                       <FormMessage />
                       <FormDescription>Maximum 255 characters are allow in address</FormDescription>

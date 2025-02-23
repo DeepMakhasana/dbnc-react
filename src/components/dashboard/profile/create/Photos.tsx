@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import useMultiStepFormContext from "@/context/multi-step-form/useMultiStepFormContext";
-import { generateUniqueId } from "@/lib/utils";
+import { createSlug, generateUniqueId } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IS3PutMultipleObjectPayload, IS3PutMultipleObjectResponse, putMultipleObjectPresignedUrl } from "@/api/s3";
 import { toast } from "@/hooks/use-toast";
@@ -182,7 +182,8 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
     feedbackLink,
     upiId,
     bio,
-    addressLine,
+    addressLine1,
+    addressLine2,
     cityId,
     googleMapLink,
     latitude,
@@ -204,7 +205,8 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
     onSuccess: (data) => {
       console.log("successfully create store", data);
       createStoreAddressMutation({
-        addressLine,
+        addressLine1,
+        addressLine2,
         cityId: Number(cityId),
         stateId: Number(stateId),
         latitude: Number(latitude),
@@ -370,7 +372,7 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
       number,
       whatsappNumber,
       tagline: tagline,
-      slug,
+      slug: `${slug}-${createSlug(addressLine2)}`,
       logo,
       feedbackLink,
       isActive: true,
