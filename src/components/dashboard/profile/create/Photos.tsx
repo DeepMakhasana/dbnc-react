@@ -258,14 +258,18 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
     mutationFn: createStoreService,
     onSuccess: (data) => {
       console.log("successfully create store service", data);
-      createStoreLinksMutation(
-        links.map((l, i) => ({
-          index: i + 1,
-          SocialMediaId: Number(l.socialMediaId),
-          link: l.link,
-          storeId: data[0].storeId,
-        }))
-      );
+      if (links.length > 0) {
+        createStoreLinksMutation(
+          links.map((l, i) => ({
+            index: i + 1,
+            SocialMediaId: Number(l.socialMediaId),
+            link: l.link,
+            storeId: data[0].storeId,
+          }))
+        );
+      } else {
+        createStorePhotosMutation({ storeId: data[0].storeId, paths: photos });
+      }
     },
     onError: (error: any) => {
       console.log("error", error);
