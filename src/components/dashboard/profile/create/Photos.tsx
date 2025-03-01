@@ -369,21 +369,28 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     console.log(images);
-    createStoreMutation({
-      name,
-      categoryId: Number(categoryId),
-      email,
-      number,
-      whatsappNumber,
-      tagline: tagline,
-      slug: `${slug}-${createSlug(addressLine2)}`,
-      logo,
-      feedbackLink,
-      isActive: true,
-      storeOwnerUserId: Number(user?.id),
-      upiId,
-      bio,
-    });
+    if (uploadImages.length > 0) {
+      createStoreMutation({
+        name,
+        categoryId: Number(categoryId),
+        email,
+        number,
+        whatsappNumber,
+        tagline: tagline,
+        slug: `${slug}-${createSlug(addressLine2)}`,
+        logo,
+        feedbackLink,
+        isActive: true,
+        storeOwnerUserId: Number(user?.id),
+        upiId,
+        bio,
+      });
+    } else {
+      toast({
+        title: "First upload store photos then create.",
+        variant: "destructive",
+      });
+    }
   }
 
   if (isLoading) {
