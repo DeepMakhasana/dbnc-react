@@ -320,10 +320,7 @@ const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: Ac
                           type="button"
                           variant="outline"
                           role="combobox"
-                          className={cn(
-                            "sm:w-[400px] w-[220px] justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
+                          className={cn("sm:w-[400px] w-full justify-between", !field.value && "text-muted-foreground")}
                         >
                           {field.value
                             ? category?.find((category) => String(category.id) === field.value)?.name
@@ -332,7 +329,7 @@ const CategoryServices = ({ action = ActionType.CREATE, storeId }: { action?: Ac
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="sm:w-[400px] w-[220px] p-0">
+                    <PopoverContent className="sm:w-[400px] w-full p-0">
                       <Command>
                         <CommandInput
                           onValueChange={(e) => setSearchCategory(e)}
