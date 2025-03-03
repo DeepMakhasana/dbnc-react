@@ -373,7 +373,7 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
                   </div>
                 ) : (
                   <FormItem>
-                    <FormLabel>Logo</FormLabel>
+                    <FormLabel>Logo or Store Front Photo</FormLabel>
                     <FormControl>
                       <Input type="file" accept="image/*" onChange={handleImageChange} />
                     </FormControl>
