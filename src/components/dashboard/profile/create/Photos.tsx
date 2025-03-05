@@ -368,7 +368,6 @@ const Photos = ({ action = ActionType.CREATE, storeId }: { action?: ActionType; 
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log(images);
     if (photos.length > 0) {
       createStoreMutation({
         name,

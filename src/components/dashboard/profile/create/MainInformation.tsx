@@ -21,7 +21,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import useAuthContext from "@/context/auth/useAuthContext";
-import { createSlug, validateImageSize } from "@/lib/utils";
+import { createSlug } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
 import { imageBaseUrl } from "@/lib/constants";
 import { mainInformationSchema } from "./formSchema";
@@ -200,19 +200,19 @@ const MainInformation = ({ action = ActionType.CREATE, storeId }: { action?: Act
       setPreview(URL.createObjectURL(selectedFile));
 
       // Proceed with valid data
-      if (!validateImageSize(selectedFile?.size as number)) {
-        toast({
-          title: "Image upload warning:",
-          description: "Invalid file size, size must be less then 2 MB.",
-          variant: "destructive",
-        });
-      } else {
-        // generate presigned-url
-        const type = `${selectedFile?.type}`.split("/");
-        const updateFileName = `${user?.id}/logo-${Date.now()}.${type[1]}`;
-        setLogoUploadKey(updateFileName);
-        imagePresignedURLPutObjetMutate({ fileName: updateFileName, fileType: selectedFile.type });
-      }
+      // if (!validateImageSize(selectedFile?.size as number)) {
+      //   toast({
+      //     title: "Image upload warning:",
+      //     description: "Invalid file size, size must be less then 2 MB.",
+      //     variant: "destructive",
+      //   });
+      // } else {
+      // generate presigned-url
+      const type = `${selectedFile?.type}`.split("/");
+      const updateFileName = `${user?.id}/logo-${Date.now()}.${type[1]}`;
+      setLogoUploadKey(updateFileName);
+      imagePresignedURLPutObjetMutate({ fileName: updateFileName, fileType: selectedFile.type });
+      // }
     }
   };
 
